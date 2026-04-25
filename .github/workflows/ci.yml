@@ -1,11 +1,9 @@
 name: CI
 
-# Lightweight checks on every push to main and on PRs — typecheck the front
-# end, cargo check the Rust side. The full bundle build only runs on tags
-# (see release.yml) since it's slow and platform-matrixed.
+# Lightweight checks on PRs only. Direct pushes to main skip CI — release.yml
+# handles tagged commits with the full bundle matrix, and there's no point
+# running both on the same commit.
 on:
-  push:
-    branches: [main]
   pull_request:
 
 jobs:
