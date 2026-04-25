@@ -8,6 +8,9 @@
     "dialog:allow-open",
     "opener:default",
     "opener:allow-open-path",
-    "opener:allow-open-url"
+    "opener:allow-open-url",
+    "updater:default",
+    "process:default",
+    "process:allow-restart"
   ]
 }

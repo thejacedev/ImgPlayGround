@@ -72,6 +72,14 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Required for the auto-updater. Generated once via:
+          #   npm run tauri signer generate -- -w ~/.tauri/imgplayground.key
+          # then store the contents of the *private* key file as the
+          # TAURI_SIGNING_PRIVATE_KEY repo secret, and the password used at
+          # generation time as TAURI_SIGNING_PRIVATE_KEY_PASSWORD.
+          # The matching public key goes in tauri.conf.json (plugins.updater.pubkey).
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "ImgPlayGround ${{ github.ref_name }}"

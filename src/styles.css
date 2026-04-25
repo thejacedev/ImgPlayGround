@@ -631,6 +631,36 @@ body {
   animation: toast-in var(--dur-med) var(--ease-out-expo) both;
 }
 
+/* Auto-updater banner. Lives above the bottom bar in the lower-right;
+   only renders when an update is available, downloading, or ready. */
+.update-banner {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--bottombar) + 12px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px 10px 16px;
+  background: color-mix(in oklch, var(--panel), var(--bg) 25%);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  box-shadow: 0 12px 36px color-mix(in oklch, var(--bg), transparent 40%);
+  backdrop-filter: blur(10px);
+  z-index: 45;
+  max-width: 420px;
+  animation: toast-in var(--dur-med) var(--ease-out-expo) both;
+}
+.update-banner-text { min-width: 0; }
+.update-banner::before {
+  content: "";
+  width: 6px;
+  height: 36px;
+  border-radius: 3px;
+  background: var(--accent);
+  margin-right: 4px;
+  box-shadow: 0 0 12px color-mix(in oklch, var(--accent), transparent 50%);
+}
+
 /* Fullscreen image viewer — phone-style lightbox over the gallery. */
 .viewer {
   position: fixed;

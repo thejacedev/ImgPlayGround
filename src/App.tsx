@@ -10,6 +10,7 @@ import Gallery from "./components/Gallery";
 import KeyManager from "./components/KeyManager";
 import Settings from "./components/Settings";
 import Toasts from "./components/Toasts";
+import UpdateBanner from "./components/UpdateBanner";
 
 export default function App() {
   const {
@@ -76,6 +77,7 @@ export default function App() {
         </main>
       </div>
       <BottomBar />
+      <UpdateBanner />
       <Toasts />
     </div>
   );

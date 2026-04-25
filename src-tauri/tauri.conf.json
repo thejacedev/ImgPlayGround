@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "ImgPlayGround",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "identifier": "dev.jace.imgplayground",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -37,7 +37,18 @@
     ],
     "category": "GraphicsAndDesign",
     "shortDescription": "Bulk image generation across major providers",
-    "longDescription": "ImgPlayGround generates images via OpenAI, Google, Stability, Replicate, Fal, and Black Forest Labs APIs. Bulk runs, local storage, optional git auto-commit."
+    "longDescription": "ImgPlayGround generates images via OpenAI, Google, Stability, Replicate, Fal, and Black Forest Labs APIs. Bulk runs, local storage, optional git auto-commit.",
+    "createUpdaterArtifacts": true
   },
-  "plugins": {}
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/thejacedev/ImgPlayGround/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNFNzk3ODdGOEUxQkNGNzMKUldSenp4dU9mM2g1UHExK0VMbGN2L2xvS29iSytYWXowbnk5djJFQXNxZjJ0VmhxbDdqU0k1b3cK",
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
 }
