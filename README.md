@@ -164,7 +164,7 @@ from any error output.
 ## Cutting a release
 
 CI auto-builds and publishes on every `v*` tag — Linux (`.AppImage` + `.rpm`
-+ `.deb`), macOS (Apple Silicon + Intel `.dmg`), Windows (`.msi`).
++ `.deb`), macOS Apple Silicon (`.dmg`), Windows (`.msi`).
 
 ```bash
 # 1. Bump version in package.json, src-tauri/Cargo.toml,
