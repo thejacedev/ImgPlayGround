@@ -271,6 +271,10 @@ matrix, the gallery glow, and the bottom-bar status dots.
 | Shell | Tauri v2 |
 | Bundles | AppImage · RPM · DEB · DMG (arm64 + x64) · MSI |
 
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) — versioned, follows [Keep a Changelog](https://keepachangelog.com/).
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).

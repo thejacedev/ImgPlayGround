@@ -6,6 +6,7 @@ import Rail from "./components/Rail";
 import BottomBar from "./components/BottomBar";
 import GeneratePanel from "./components/GeneratePanel";
 import BulkPanel from "./components/BulkPanel";
+import Queue from "./components/Queue";
 import Gallery from "./components/Gallery";
 import KeyManager from "./components/KeyManager";
 import Settings from "./components/Settings";
@@ -21,6 +22,7 @@ export default function App() {
     setGithub,
     setBulk,
     updateBulkJob,
+    updateQueueJob,
     pushToast,
   } = useStore();
 
@@ -48,21 +50,40 @@ export default function App() {
   // mounted, so live progress survives navigation.
   useEffect(() => {
     type Progress = { total: number; completed: number; failed: number };
-    type JobDone = { index: number; provider: Provider; success: boolean };
+    type JobDone = {
+      index: number;
+      provider: Provider;
+      success: boolean;
+      cancelled?: boolean;
+    };
     const unsubProgress = listen<Progress>("bulk-progress", (e) =>
       setBulk({ progress: e.payload })
     );
     const unsubJob = listen<JobDone>("bulk-job-done", (e) => {
-      updateBulkJob(e.payload.index, {
-        provider: e.payload.provider,
-        status: e.payload.success ? "success" : "failed",
+      const { index, provider, success, cancelled } = e.payload;
+      updateBulkJob(index, {
+        provider,
+        status: success ? "success" : "failed",
       });
+      // Mirror into the cross-source queue.
+      const ids = useStore.getState().currentBatchJobIds;
+      const id = ids[index];
+      if (id) {
+        updateQueueJob(id, {
+          status: cancelled
+            ? "cancelled"
+            : success
+            ? "succeeded"
+            : "failed",
+          endedAt: Date.now(),
+        });
+      }
     });
     return () => {
       unsubProgress.then((u) => u());
       unsubJob.then((u) => u());
     };
-  }, [setBulk, updateBulkJob]);
+  }, [setBulk, updateBulkJob, updateQueueJob]);
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -71,6 +92,7 @@ export default function App() {
         <main className="flex-1 overflow-auto">
           {tab === "generate" && <GeneratePanel />}
           {tab === "bulk" && <BulkPanel />}
+          {tab === "queue" && <Queue />}
           {tab === "gallery" && <Gallery />}
           {tab === "keys" && <KeyManager />}
           {tab === "settings" && <Settings />}

@@ -631,6 +631,483 @@ body {
   animation: toast-in var(--dur-med) var(--ease-out-expo) both;
 }
 
+/* Gallery folder browsing — breadcrumb at top, folder tiles in their own
+   grid above the image contact sheet. */
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.breadcrumb-sep { opacity: 0.45; }
+.breadcrumb-link {
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+              background-color var(--dur-fast) var(--ease-out-quart);
+}
+.breadcrumb-link:hover { color: var(--ink); background: var(--panel-2); }
+.breadcrumb-link.drag-over,
+.breadcrumb-current.drag-over {
+  background: color-mix(in oklch, var(--accent), transparent 78%);
+  color: var(--ink);
+  outline: 1px solid color-mix(in oklch, var(--accent), transparent 60%);
+}
+.breadcrumb-current {
+  padding: 2px 6px;
+  color: var(--ink);
+}
+
+/* New-folder inline form — appears between breadcrumb and folders grid. */
+.new-folder-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  animation: folder-confirm-in var(--dur-fast) var(--ease-out-expo) both;
+}
+.new-folder-row .input { width: 240px; }
+
+.folders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.folder-tile {
+  aspect-ratio: 1;
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: linear-gradient(
+    160deg,
+    color-mix(in oklch, var(--panel-2), var(--bg) 35%) 0%,
+    color-mix(in oklch, var(--panel), var(--bg) 30%) 100%
+  );
+  overflow: hidden;
+  transition: transform var(--dur-fast) var(--ease-out-quart),
+              border-color var(--dur-fast) var(--ease-out-quart),
+              background var(--dur-fast) var(--ease-out-quart);
+}
+.folder-tile-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  position: relative;
+  z-index: 1;
+}
+.folder-tile::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--p-openai), var(--p-google), var(--p-stability),
+    var(--p-replicate), var(--p-fal), var(--p-bfl)
+  );
+  opacity: 0.5;
+}
+.folder-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+  background: linear-gradient(
+    160deg,
+    color-mix(in oklch, var(--panel-2), var(--bg) 20%) 0%,
+    color-mix(in oklch, var(--panel-hover), var(--bg) 20%) 100%
+  );
+}
+.folder-tile:hover::before { opacity: 1; }
+
+/* Drag states — source dims slightly, target highlights. */
+.folder-tile.is-dragging,
+.thumb-wrap.is-dragging { opacity: 0.4; }
+.folder-tile.drag-over {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-color: var(--accent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in oklch, var(--accent), var(--panel) 80%) 0%,
+    color-mix(in oklch, var(--accent), var(--panel) 88%) 100%
+  );
+  transform: translateY(-2px) scale(1.01);
+}
+.folder-tile.drag-over::before { opacity: 1; }
+.folder-tile-icon {
+  width: 40px;
+  height: 40px;
+  color: color-mix(in oklch, var(--ink), var(--accent) 30%);
+}
+.folder-tile-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-variation-settings: "opsz" 40, "SOFT" 40;
+  font-size: 17px;
+  line-height: 1.1;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.folder-tile-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* Delete affordance — small ghost button top-right. Always visible (was
+   hover-only, but small + faded made the hit target ambiguous and clicks
+   leaked to the main tile button on some compositors). Subtle by default,
+   asserts itself on hover. */
+.folder-tile-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in oklch, var(--bg), transparent 30%);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.6;
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease-out-quart),
+              color var(--dur-fast) var(--ease-out-quart),
+              border-color var(--dur-fast) var(--ease-out-quart),
+              background var(--dur-fast) var(--ease-out-quart),
+              transform var(--dur-fast) var(--ease-out-quart);
+  z-index: 3;
+}
+.folder-tile:hover .folder-tile-delete,
+.folder-tile:focus-within .folder-tile-delete {
+  opacity: 1;
+}
+.folder-tile-delete:hover {
+  color: var(--danger);
+  border-color: color-mix(in oklch, var(--danger), transparent 50%);
+  background: color-mix(in oklch, var(--danger), transparent 85%);
+  transform: scale(1.05);
+}
+.folder-tile-delete:active { transform: scale(0.95); }
+
+/* Confirm-delete state. Replaces the entire tile body so the destructive
+   action is unmissable, and the cancel button is the bigger of the two. */
+.folder-tile-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  background: color-mix(in oklch, var(--danger), var(--panel) 86%);
+  border-radius: inherit;
+  animation: folder-confirm-in var(--dur-fast) var(--ease-out-expo) both;
+}
+@keyframes folder-confirm-in {
+  from { opacity: 0; transform: scale(0.985); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.folder-tile-confirm-q {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ink);
+  line-height: 1.15;
+}
+.folder-tile-confirm-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: color-mix(in oklch, var(--danger), var(--ink) 30%);
+}
+.folder-tile-confirm-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.folder-tile-confirm-actions .btn-danger {
+  background: var(--danger);
+  color: var(--bg);
+  border-color: var(--danger);
+}
+.folder-tile-confirm-actions .btn-danger:hover {
+  background: color-mix(in oklch, var(--danger), var(--ink) 12%);
+}
+
+.gallery-empty-folder {
+  padding: 80px 16px;
+  text-align: center;
+}
+
+/* Rail badge — live count overlay on the Queue tab when jobs are in flight. */
+.rail-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 0 8px color-mix(in oklch, var(--accent), transparent 60%);
+}
+
+/* Queue tab. Filter pills + dense rows with provider chip, status, prompt,
+   timing, and per-row actions. */
+.queue-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out-quart),
+              color var(--dur-fast) var(--ease-out-quart),
+              border-color var(--dur-fast) var(--ease-out-quart);
+}
+.queue-filter:hover { color: var(--ink); }
+.queue-filter.is-on {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+.queue-filter-count {
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.queue-row {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "meta prompt actions"
+    "meta error  actions"
+    "foot foot   actions";
+  gap: 4px 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  transition: border-color var(--dur-fast) var(--ease-out-quart);
+}
+.queue-row:hover { border-color: var(--border-strong); }
+.queue-row-running, .queue-row-pending {
+  border-color: color-mix(in oklch, var(--accent), transparent 60%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--accent), var(--panel) 92%) 0%,
+    var(--panel) 100%
+  );
+}
+.queue-row-failed, .queue-row-cancelled {
+  border-color: color-mix(in oklch, var(--danger), transparent 65%);
+}
+
+.queue-row-meta {
+  grid-area: meta;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.queue-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--panel-2);
+  color: var(--muted);
+}
+.queue-status-running, .queue-status-pending {
+  background: color-mix(in oklch, var(--accent), transparent 78%);
+  color: color-mix(in oklch, var(--accent), var(--ink) 30%);
+}
+.queue-status-succeeded {
+  background: color-mix(in oklch, var(--success), transparent 80%);
+  color: color-mix(in oklch, var(--success), var(--ink) 30%);
+}
+.queue-status-failed, .queue-status-cancelled {
+  background: color-mix(in oklch, var(--danger), transparent 80%);
+  color: color-mix(in oklch, var(--danger), var(--ink) 30%);
+}
+.queue-source {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.queue-row-prompt {
+  grid-area: prompt;
+  font-size: 13px;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.35;
+}
+.queue-row-error {
+  grid-area: error;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: color-mix(in oklch, var(--danger), var(--ink) 25%);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: copy;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  display: block;
+}
+.queue-row-error:hover {
+  color: color-mix(in oklch, var(--danger), var(--ink) 10%);
+}
+.queue-row-foot {
+  grid-area: foot;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.queue-row-actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.queue-row-spin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--accent);
+}
+
+/* Right-click context menu — small, dense, mono labels with hint shortcuts
+   on the right. Dismisses on outside-click / Escape / scroll. */
+.ctxmenu {
+  position: fixed;
+  z-index: 80;
+  min-width: 200px;
+  padding: 4px;
+  background: color-mix(in oklch, var(--panel), var(--bg) 15%);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px color-mix(in oklch, var(--bg), transparent 35%);
+  backdrop-filter: blur(10px);
+  animation: ctxmenu-in 120ms var(--ease-out-expo) both;
+}
+@keyframes ctxmenu-in {
+  from { opacity: 0; transform: translateY(-2px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ctxmenu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 5px;
+  text-align: left;
+  font-size: 12.5px;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  gap: 18px;
+  transition: background var(--dur-fast) var(--ease-out-quart);
+}
+.ctxmenu-item:hover:not(:disabled) {
+  background: var(--panel-2);
+}
+.ctxmenu-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.ctxmenu-item.is-danger { color: var(--danger); }
+.ctxmenu-item.is-danger:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--danger), transparent 86%);
+}
+.ctxmenu-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.ctxmenu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 6px;
+}
+
+/* Inline rename row — same shape as the new-folder form. */
+.rename-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.rename-row .input { width: 280px; }
+.rename-row-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
 /* Auto-updater banner. Lives above the bottom bar in the lower-right;
    only renders when an update is available, downloading, or ready. */
 .update-banner {
@@ -659,6 +1136,235 @@ body {
   background: var(--accent);
   margin-right: 4px;
   box-shadow: 0 0 12px color-mix(in oklch, var(--accent), transparent 50%);
+}
+
+/* Pixel art editor — fullscreen overlay with live canvas preview on the
+   left and a controls panel on the right. Editor is a real workspace, not a
+   menu action: every change is reflected in the canvas immediately, then
+   the Save button persists via the backend pixelate command. */
+.editor {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "top top"
+    "stage panel";
+  background: color-mix(in oklch, var(--bg), transparent 4%);
+  backdrop-filter: blur(24px);
+  animation: viewer-in var(--dur-med) var(--ease-out-expo) both;
+}
+.editor-top {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklch, var(--panel), var(--bg) 25%);
+}
+.editor-title-stack { min-width: 0; line-height: 1.1; }
+.editor-kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.editor-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40ch;
+}
+.editor-top-spacer { flex: 1; }
+
+.editor-stage {
+  grid-area: stage;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 28px;
+  min-width: 0;
+  min-height: 0;
+}
+.editor-canvas-wrap {
+  position: relative;
+  /* Fill the available stage so the canvas inside has somewhere to scale to.
+     Without this, a 32×32 canvas in Tiny mode displays at 32 CSS pixels and
+     vanishes to a thumbnail in the corner. */
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: calc(100vw - 380px - 80px);
+  max-height: calc(100vh - 220px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Subtle checkerboard underneath so transparent pixels read as transparent. */
+  background-image:
+    linear-gradient(45deg, color-mix(in oklch, var(--panel-2), transparent 50%) 25%, transparent 25%),
+    linear-gradient(-45deg, color-mix(in oklch, var(--panel-2), transparent 50%) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, color-mix(in oklch, var(--panel-2), transparent 50%) 75%),
+    linear-gradient(-45deg, transparent 75%, color-mix(in oklch, var(--panel-2), transparent 50%) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 4px;
+  box-shadow:
+    0 30px 80px color-mix(in oklch, var(--bg), transparent 35%),
+    0 0 0 1px color-mix(in oklch, var(--tc, var(--accent)), transparent 70%);
+}
+.editor-canvas {
+  display: block;
+  /* Fill the wrapper, preserve aspect via object-fit. The canvas's intrinsic
+     pixel grid stays at whatever size we drew (e.g. 32×32 for Tiny mode) but
+     it's painted at full stage size so the user can actually see it.
+     `image-rendering: pixelated` keeps the upscale crisp instead of blurry. */
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border-radius: 6px;
+}
+.editor-stage-meta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.editor-panel {
+  grid-area: panel;
+  border-left: 1px solid var(--border);
+  background: color-mix(in oklch, var(--panel), var(--bg) 15%);
+  padding: 18px 18px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.editor-source-info {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.editor-source-row { display: flex; align-items: center; }
+
+.editor-section { display: flex; flex-direction: column; gap: 10px; }
+
+/* Custom range track + thumb so the slider matches the rest of the chrome. */
+.editor-slider {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: color-mix(in oklch, var(--panel-2), var(--border) 50%);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+}
+.editor-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--accent);
+  border: 2px solid var(--panel);
+  box-shadow: 0 0 0 1px var(--accent);
+  cursor: grab;
+  transition: transform var(--dur-fast) var(--ease-out-quart);
+}
+.editor-slider::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.1); }
+.editor-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--accent);
+  border: 2px solid var(--panel);
+  cursor: grab;
+}
+
+.editor-presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.editor-preset {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out-quart),
+              color var(--dur-fast) var(--ease-out-quart),
+              border-color var(--dur-fast) var(--ease-out-quart);
+}
+.editor-preset:hover { color: var(--ink); border-color: var(--border-strong); }
+.editor-preset.is-on {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+
+.editor-radio {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in oklch, var(--panel-2), var(--bg) 25%);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out-quart),
+              background var(--dur-fast) var(--ease-out-quart);
+}
+.editor-radio:has(input:checked) {
+  border-color: var(--accent);
+  background: color-mix(in oklch, var(--accent), var(--panel) 90%);
+}
+.editor-radio input {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+.editor-radio + .editor-radio { margin-top: 6px; }
+
+.editor-hint {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.editor-hint code {
+  background: color-mix(in oklch, var(--panel-2), var(--bg) 20%);
+  border: 1px solid var(--border);
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 10.5px;
 }
 
 /* Fullscreen image viewer — phone-style lightbox over the gallery. */
@@ -803,7 +1509,223 @@ body {
       color-mix(in oklch, var(--panel), var(--bg) 20%) 100%);
   border: 1px solid var(--border);
   overflow: hidden;
-  min-height: 280px;
+  min-height: 320px;
+  transition: border-color var(--dur-med) var(--ease-out-quart);
+}
+.hero-canvas.is-busy {
+  border-color: color-mix(in oklch, var(--tc, var(--accent)), transparent 50%);
+}
+
+/* Active "thinking" state — sweeping accent gradient + italic display label.
+   Disappears the moment results land. */
+.hero-thinking {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  overflow: hidden;
+  background: radial-gradient(
+    ellipse at 50% 60%,
+    color-mix(in oklch, var(--tc, var(--accent)), transparent 92%) 0%,
+    transparent 60%
+  );
+}
+.hero-thinking::before,
+.hero-thinking::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.hero-thinking::before {
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in oklch, var(--tc, var(--accent)), transparent 86%) 47%,
+    color-mix(in oklch, var(--tc, var(--accent)), transparent 65%) 50%,
+    color-mix(in oklch, var(--tc, var(--accent)), transparent 86%) 53%,
+    transparent 70%
+  );
+  background-size: 240% 100%;
+  background-position: 100% 0;
+  animation: hero-scan 2.6s linear infinite;
+}
+.hero-thinking::after {
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 18px,
+    color-mix(in oklch, var(--tc, var(--accent)), transparent 96%) 19px,
+    transparent 20px
+  );
+  animation: hero-grid-drift 6s linear infinite;
+  opacity: 0.6;
+}
+.hero-thinking-label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-variation-settings: "opsz" 96, "SOFT" 60;
+  font-size: clamp(22px, 3vw, 32px);
+  color: color-mix(in oklch, var(--ink), var(--tc, var(--accent)) 30%);
+  letter-spacing: -0.01em;
+  animation: hero-label-breathe 1.8s ease-in-out infinite;
+}
+.hero-thinking-sub {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hero-thinking-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+.hero-thinking-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--tc, var(--accent));
+  animation: hero-dot-bounce 1s var(--ease-out-quart) infinite;
+}
+.hero-thinking-dots span:nth-child(2) { animation-delay: 120ms; }
+.hero-thinking-dots span:nth-child(3) { animation-delay: 240ms; }
+
+@keyframes hero-scan {
+  0%   { background-position: 130% 0; }
+  100% { background-position: -30% 0; }
+}
+@keyframes hero-grid-drift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 80px 0; }
+}
+@keyframes hero-label-breathe {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1; }
+}
+@keyframes hero-dot-bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.45; }
+  50%      { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Hero result tile — bigger entrance than the gallery's thumb-pop. The tile
+   arrives from a small offset with a quick provider-color outline echo, then
+   settles. Used only on Generate results so the moment of arrival lands. */
+.thumb-pop-hero {
+  animation: thumb-pop-hero 720ms var(--ease-out-expo) both;
+}
+@keyframes thumb-pop-hero {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.86);
+    box-shadow: 0 0 0 0 transparent;
+  }
+  55% {
+    opacity: 1;
+    box-shadow:
+      0 12px 32px color-mix(in oklch, var(--bg), transparent 40%),
+      0 0 0 2px color-mix(in oklch, var(--tc, var(--accent)), transparent 35%),
+      0 0 28px color-mix(in oklch, var(--tc, var(--accent)), transparent 55%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* Primary button "breathing" while async work is in flight. Pairs with the
+   in-button spinner — spinner says "I'm working", glow says "still alive". */
+.btn-primary.is-busy {
+  animation: btn-breathe 1.8s ease-in-out infinite;
+}
+@keyframes btn-breathe {
+  0%, 100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--accent), transparent 70%),
+      0 0 22px color-mix(in oklch, var(--accent), transparent 55%);
+  }
+}
+
+/* Bulk gauge tick pop — re-mounting per state change (BulkGauge keys ticks
+   on `${i}-${status}`) makes this animation play exactly once when a job
+   completes, scaling the tick up briefly with a colored bloom before it
+   settles back to its bar height. */
+.gauge-tick[data-state="success"] {
+  animation: tick-pop-success 700ms var(--ease-out-expo) both;
+}
+.gauge-tick[data-state="failed"] {
+  animation: tick-pop-fail 700ms var(--ease-out-expo) both;
+}
+
+@keyframes tick-pop-success {
+  0% {
+    transform: scaleY(1);
+    box-shadow: 0 0 0 0 transparent;
+    background: color-mix(in oklch, var(--panel-2), var(--border) 60%);
+  }
+  20% {
+    transform: scaleY(2.4);
+    box-shadow: 0 0 14px color-mix(in oklch, var(--tc, var(--accent)), transparent 30%);
+    background: var(--tc, var(--accent));
+  }
+  100% {
+    transform: scaleY(1);
+    box-shadow: 0 0 8px color-mix(in oklch, var(--tc, var(--accent)), transparent 50%);
+    background: var(--tc, var(--accent));
+  }
+}
+@keyframes tick-pop-fail {
+  0% {
+    transform: scaleY(1);
+    box-shadow: 0 0 0 0 transparent;
+    background: color-mix(in oklch, var(--panel-2), var(--border) 60%);
+  }
+  20% {
+    transform: scaleY(2.4);
+    box-shadow: 0 0 14px color-mix(in oklch, var(--danger), transparent 30%);
+    background: var(--danger);
+  }
+  100% {
+    transform: scaleY(1);
+    box-shadow: 0 0 6px color-mix(in oklch, var(--danger), transparent 70%);
+    background: var(--danger);
+  }
+}
+
+/* Bulk panel: progress strip surface gets a deeper background while busy
+   so the gauge feels like it's living inside an active console, not just
+   a row of pixels above an idle card. */
+.bulk-active-frame {
+  position: relative;
+}
+.bulk-active-frame::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid color-mix(in oklch, var(--accent), transparent 65%);
+  box-shadow: 0 0 22px color-mix(in oklch, var(--accent), transparent 80%);
+  animation: bulk-frame-breathe 2.6s ease-in-out infinite;
+  z-index: 0;
+}
+@keyframes bulk-frame-breathe {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
 }
 .hero-canvas-empty {
   position: absolute;

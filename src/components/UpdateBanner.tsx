@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { useStore } from "../lib/store";
 import Spinner from "./Spinner";
 
 type State =
@@ -16,6 +17,7 @@ type State =
   | { kind: "dismissed" };
 
 export default function UpdateBanner() {
+  const pushToast = useStore((s) => s.pushToast);
   const [state, setState] = useState<State>({ kind: "idle" });
 
   // Probe once on app launch. Quiet on failure — a missing GitHub release
@@ -54,7 +56,7 @@ export default function UpdateBanner() {
       });
       setState({ kind: "ready", update });
     } catch (e) {
-      console.error(e);
+      pushToast("error", `Update failed: ${String(e)}`);
       setState({ kind: "available", update });
     }
   }
@@ -62,11 +64,7 @@ export default function UpdateBanner() {
   if (state.kind === "idle" || state.kind === "dismissed") return null;
 
   const update =
-    state.kind === "available"
-      ? state.update
-      : state.kind === "downloading"
-      ? state.update
-      : state.kind === "ready"
+    state.kind === "available" || state.kind === "downloading" || state.kind === "ready"
       ? state.update
       : null;
   if (!update) return null;
@@ -76,16 +74,33 @@ export default function UpdateBanner() {
       ? Math.round((state.downloaded / state.total) * 100)
       : 0;
 
+  const kicker =
+    state.kind === "ready"
+      ? "Update ready"
+      : state.kind === "downloading"
+      ? "Downloading"
+      : "Update available";
+
+  const headline =
+    state.kind === "ready"
+      ? `Restart to install v${update.version}`
+      : state.kind === "downloading"
+      ? `v${update.version}`
+      : `v${update.version} is out`;
+
   return (
-    <div className="update-banner" role="status" aria-live="polite">
+    <div
+      className="update-banner"
+      role="status"
+      aria-live="polite"
+      aria-busy={state.kind === "downloading"}
+    >
       <div className="update-banner-text">
-        <div className="text-xs font-mono uppercase tracking-[0.08em] text-muted">
-          {state.kind === "ready" ? "Update ready" : "Update available"}
+        <div className="text-[10px] font-mono uppercase tracking-[0.08em] text-muted">
+          {kicker}
         </div>
-        <div className="font-display italic text-base">
-          {state.kind === "ready"
-            ? `Restart to install v${update.version}`
-            : `v${update.version} is out`}
+        <div className="font-display italic text-base leading-tight mt-0.5">
+          {headline}
         </div>
         {state.kind === "downloading" && (
           <div className="progress-track running mt-2 w-44">
@@ -112,9 +127,11 @@ export default function UpdateBanner() {
           </>
         )}
         {state.kind === "downloading" && (
-          <button className="btn-primary" disabled>
-            <Spinner label="downloading" />
-            {state.total > 0 ? `${pct}%` : "Downloading…"}
+          <button className="btn-primary" disabled aria-label="Downloading">
+            <Spinner />
+            <span className="tabular-nums">
+              {state.total > 0 ? `${pct}%` : "…"}
+            </span>
           </button>
         )}
         {state.kind === "ready" && (

@@ -21,6 +21,8 @@ export default function BulkPanel() {
     bulkJobs,
     bulkResults,
     setBulk,
+    addQueueJobs,
+    setCurrentBatchJobIds,
   } = useStore();
   const [prompts, setPrompts] = useState("");
   const [selected, setSelected] = useState<Set<Provider>>(new Set(["openai"]));
@@ -65,9 +67,30 @@ export default function BulkPanel() {
       );
     }
 
-    const allJobs: JobState[] = activeProviders.flatMap((p) =>
-      promptsList.map<JobState>(() => ({ provider: p, status: "pending" }))
+    // Build the job list in the same order Rust dispatches: providers × prompts.
+    // The frontend gauge consumes JobState; the cross-app queue tracks rich
+    // QueueJob records so the Queue tab can show prompts + results + errors.
+    const dispatch = activeProviders.flatMap((p) =>
+      promptsList.map((pr) => ({ provider: p, prompt: pr }))
     );
+    const allJobs: JobState[] = dispatch.map(({ provider }) => ({
+      provider,
+      status: "pending",
+    }));
+    const startedAt = Date.now();
+    const queueJobs = dispatch.map(({ provider, prompt }) => ({
+      id: crypto.randomUUID(),
+      source: "bulk" as const,
+      provider,
+      prompt,
+      status: "pending" as const,
+      startedAt,
+      endedAt: null,
+      paths: [],
+      error: null,
+    }));
+    addQueueJobs(queueJobs);
+    setCurrentBatchJobIds(queueJobs.map((j) => j.id));
     setBulk({
       busy: true,
       jobs: allJobs,
@@ -232,7 +255,7 @@ export default function BulkPanel() {
               : "Ready."}
           </div>
           <button
-            className="btn-primary"
+            className={`btn-primary ${bulkBusy ? "is-busy" : ""}`}
             disabled={bulkBusy || !prompts.trim()}
             onClick={run}
           >

@@ -5,6 +5,7 @@ import { openPath, openUrl } from "@tauri-apps/plugin-opener";
 import type {
   Provider,
   GalleryItem,
+  GalleryDir,
   GenResult,
   ModelInfo,
   GhRepo,
@@ -45,11 +46,32 @@ export const api = {
     invoke<GenResult>("generate_single", { req }),
   generateBulk: (req: BulkRequest) =>
     invoke<GenResult[]>("generate_bulk", { req }),
+  cancelBulk: () => invoke<boolean>("cancel_bulk"),
 
   listGallery: () => invoke<GalleryItem[]>("list_gallery"),
+  listGalleryDir: (rel?: string) =>
+    invoke<GalleryDir>("list_gallery_dir", { rel: rel ?? "" }),
+  deleteGalleryFolder: (rel: string) =>
+    invoke<number>("delete_gallery_folder", { rel }),
+  deleteGalleryImage: (rel: string) =>
+    invoke<void>("delete_gallery_image", { rel }),
+  createGalleryFolder: (parent: string, name: string) =>
+    invoke<string>("create_gallery_folder", { parent, name }),
+  moveGalleryItem: (srcRel: string, destFolderRel: string) =>
+    invoke<string>("move_gallery_item", { srcRel, destFolderRel }),
+  renameGalleryItem: (rel: string, newName: string) =>
+    invoke<string>("rename_gallery_item", { rel, newName }),
+  reorderGalleryFolder: (
+    parent: string,
+    name: string,
+    direction: "up" | "down" | "first" | "last"
+  ) =>
+    invoke<void>("reorder_gallery_folder", { parent, name, direction }),
   readImageB64: (path: string) => invoke<string>("read_image_b64", { path }),
   copyImagesTo: (paths: string[], dest: string, subfolder?: string) =>
     invoke<string[]>("copy_images_to", { paths, dest, subfolder }),
+  pixelateImage: (rel: string, size: number, upscale = true) =>
+    invoke<string>("pixelate_image", { rel, size, upscale }),
 
   listModels: (provider: Provider, forceRefresh = false) =>
     invoke<ModelInfo[]>("list_models", { provider, forceRefresh }),

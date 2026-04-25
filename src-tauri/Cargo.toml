@@ -1,6 +1,6 @@
 [package]
 name = "imgplayground"
-version = "1.0.1"
+version = "1.1.0"
 description = "Bulk image generation across major providers"
 authors = ["JaceDev"]
 license = "MIT"
@@ -31,6 +31,7 @@ sha2 = "0.10"
 chrono = "0.4"
 slug = "0.1"
 futures = "0.3"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
 
 [profile.release]
 lto = true

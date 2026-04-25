@@ -27,7 +27,7 @@ export default function Settings() {
   return (
     <div className="p-8 max-w-3xl mx-auto space-y-5 reveal">
       <PageHeader
-        num="05"
+        num="06"
         title="Settings"
         subtitle="Where images land, and whether to push them anywhere."
       />

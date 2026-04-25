@@ -4,10 +4,11 @@ import type {
   ModelInfo,
   GhStatus,
   GenResult,
+  QueueJob,
 } from "./types";
 import type { JobState } from "../components/BulkGauge";
 
-type Tab = "generate" | "bulk" | "gallery" | "keys" | "settings";
+type Tab = "generate" | "bulk" | "queue" | "gallery" | "keys" | "settings";
 
 type Toast = {
   id: number;
@@ -59,6 +60,16 @@ type State = {
   setGen: (
     patch: Partial<{ busy: boolean; results: GenResultLocal[] }>
   ) => void;
+
+  // Cross-source queue. Generate and Bulk both push here so the Queue tab
+  // can show everything in one place. `currentBatchJobIds` maps Bulk's job
+  // index → queue id so the bulk-job-done event can reach back.
+  queue: QueueJob[];
+  currentBatchJobIds: string[];
+  addQueueJobs: (jobs: QueueJob[]) => void;
+  updateQueueJob: (id: string, patch: Partial<QueueJob>) => void;
+  removeQueueJobs: (ids: string[]) => void;
+  setCurrentBatchJobIds: (ids: string[]) => void;
 
   toasts: Toast[];
   pushToast: (kind: Toast["kind"], message: string) => void;
@@ -117,6 +128,21 @@ export const useStore = create<State>((set) => ({
       genBusy: patch.busy ?? s.genBusy,
       genResults: patch.results ?? s.genResults,
     })),
+
+  queue: [],
+  currentBatchJobIds: [],
+  addQueueJobs: (jobs) =>
+    set((s) => ({ queue: [...jobs, ...s.queue] })),
+  updateQueueJob: (id, patch) =>
+    set((s) => ({
+      queue: s.queue.map((j) => (j.id === id ? { ...j, ...patch } : j)),
+    })),
+  removeQueueJobs: (ids) =>
+    set((s) => {
+      const set_ = new Set(ids);
+      return { queue: s.queue.filter((j) => !set_.has(j.id)) };
+    }),
+  setCurrentBatchJobIds: (currentBatchJobIds) => set({ currentBatchJobIds }),
 
   toasts: [],
   pushToast: (kind, message) =>

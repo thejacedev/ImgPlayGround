@@ -22,6 +22,8 @@ export default function GeneratePanel() {
     genBusy,
     genResults,
     setGen,
+    addQueueJobs,
+    updateQueueJob,
   } = useStore();
   const [provider, setProvider] = useState<Provider>("openai");
   const [prompt, setPrompt] = useState("");
@@ -63,6 +65,20 @@ export default function GeneratePanel() {
       pushToast("error", `No key set for ${PROVIDER_LABELS[provider]}`);
       return;
     }
+    const jobId = crypto.randomUUID();
+    addQueueJobs([
+      {
+        id: jobId,
+        source: "generate",
+        provider,
+        prompt,
+        status: "running",
+        startedAt: Date.now(),
+        endedAt: null,
+        paths: [],
+        error: null,
+      },
+    ]);
     setGen({ busy: true });
     try {
       const res = await api.generateSingle({
@@ -73,6 +89,11 @@ export default function GeneratePanel() {
         model: model.trim() || undefined,
       });
       if (res.error) {
+        updateQueueJob(jobId, {
+          status: "failed",
+          endedAt: Date.now(),
+          error: res.error,
+        });
         pushToast("error", res.error);
         setGen({ busy: false });
         return;
@@ -84,16 +105,42 @@ export default function GeneratePanel() {
           provider,
         }))
       );
+      updateQueueJob(jobId, {
+        status: "succeeded",
+        endedAt: Date.now(),
+        paths: res.paths,
+      });
       setGen({ busy: false, results: withB64 });
       pushToast("success", `${res.paths.length} image(s) saved`);
     } catch (e) {
+      updateQueueJob(jobId, {
+        status: "failed",
+        endedAt: Date.now(),
+        error: String(e),
+      });
       setGen({ busy: false });
       pushToast("error", String(e));
     }
   }
 
+  const heroTc = `var(${PROVIDER_COLORS[provider]})`;
+
   const hero =
-    genResults.length > 0 ? (
+    genBusy && genResults.length === 0 ? (
+      <div className="hero-thinking">
+        <div className="hero-thinking-label">
+          <span>Generating</span>
+          <span className="hero-thinking-dots" aria-hidden>
+            <span />
+            <span />
+            <span />
+          </span>
+        </div>
+        <div className="hero-thinking-sub">
+          {PROVIDER_LABELS[provider]} · {size} · {n} image{n === 1 ? "" : "s"}
+        </div>
+      </div>
+    ) : genResults.length > 0 ? (
       <div
         className="grid gap-3 p-3"
         style={{
@@ -107,10 +154,10 @@ export default function GeneratePanel() {
           <button
             key={r.path}
             type="button"
-            className="thumb-wrap thumb-pop text-left"
+            className="thumb-wrap thumb-pop-hero text-left"
             style={
               {
-                animationDelay: `${i * 60}ms`,
+                animationDelay: `${i * 90}ms`,
                 ["--tc" as string]: `var(${PROVIDER_COLORS[r.provider]})`,
               } as React.CSSProperties
             }
@@ -126,7 +173,7 @@ export default function GeneratePanel() {
               className="px-2.5 py-2 text-[11px] text-muted truncate font-mono"
               title={r.path}
             >
-              {r.path.split("/").slice(-1)[0]}
+              {r.path.split("/").pop() ?? r.path}
             </div>
           </button>
         ))}
@@ -165,7 +212,12 @@ export default function GeneratePanel() {
         }
       />
 
-      <div className="hero-canvas relative">{hero}</div>
+      <div
+        className={`hero-canvas relative ${genBusy ? "is-busy" : ""}`}
+        style={{ ["--tc" as string]: heroTc } as React.CSSProperties}
+      >
+        {hero}
+      </div>
 
       <div className="card p-4 grid grid-cols-12 gap-3">
         <div className="col-span-12">
@@ -281,7 +333,7 @@ export default function GeneratePanel() {
 
         <div className="col-span-12 flex justify-end">
           <button
-            className="btn-primary"
+            className={`btn-primary ${genBusy ? "is-busy" : ""}`}
             disabled={genBusy || !prompt.trim()}
             onClick={run}
           >

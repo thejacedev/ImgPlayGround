@@ -19,8 +19,10 @@ export default function BulkGauge({ jobs }: { jobs: JobState[] }) {
       }
     >
       {jobs.map((j, i) => (
+        // Re-mounting the tick on status change replays the keyframe pop,
+        // giving completed jobs a one-shot bloom in their provider's color.
         <span
-          key={i}
+          key={`${i}-${j.status}`}
           className="gauge-tick"
           data-state={j.status}
           style={

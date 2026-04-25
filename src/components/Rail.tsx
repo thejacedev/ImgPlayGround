@@ -1,6 +1,6 @@
 import { useStore } from "../lib/store";
 
-type Tab = "generate" | "bulk" | "gallery" | "keys" | "settings";
+type Tab = "generate" | "bulk" | "queue" | "gallery" | "keys" | "settings";
 
 const ICON: Record<Tab, JSX.Element> = {
   generate: (
@@ -15,6 +15,12 @@ const ICON: Record<Tab, JSX.Element> = {
       <circle cx="2.5" cy="5" r="0.9" fill="currentColor" stroke="none"/>
       <circle cx="2.5" cy="10" r="0.9" fill="currentColor" stroke="none"/>
       <circle cx="2.5" cy="15" r="0.9" fill="currentColor" stroke="none"/>
+    </svg>
+  ),
+  queue: (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="10" cy="10" r="7" />
+      <path d="M10 6v4l2.5 2.5" />
     </svg>
   ),
   gallery: (
@@ -44,28 +50,42 @@ const ICON: Record<Tab, JSX.Element> = {
 const TABS: { id: Tab; label: string }[] = [
   { id: "generate", label: "Generate" },
   { id: "bulk", label: "Bulk" },
+  { id: "queue", label: "Queue" },
   { id: "gallery", label: "Gallery" },
   { id: "keys", label: "Keys" },
   { id: "settings", label: "Settings" },
 ];
 
 export default function Rail() {
-  const { tab, setTab } = useStore();
+  const { tab, setTab, queue } = useStore();
+  const inFlight = queue.filter(
+    (j) => j.status === "pending" || j.status === "running"
+  ).length;
   return (
     <aside className="rail">
       <div className="rail-brand" aria-label="ImgPlayGround" />
-      {TABS.map((t) => (
-        <button
-          key={t.id}
-          className="rail-btn"
-          data-tip={t.label}
-          aria-current={tab === t.id ? "page" : undefined}
-          aria-label={t.label}
-          onClick={() => setTab(t.id)}
-        >
-          {ICON[t.id]}
-        </button>
-      ))}
+      {TABS.map((t) => {
+        const showBadge = t.id === "queue" && inFlight > 0;
+        return (
+          <button
+            key={t.id}
+            className="rail-btn"
+            data-tip={t.label}
+            aria-current={tab === t.id ? "page" : undefined}
+            aria-label={
+              showBadge ? `${t.label} (${inFlight} in flight)` : t.label
+            }
+            onClick={() => setTab(t.id)}
+          >
+            {ICON[t.id]}
+            {showBadge && (
+              <span className="rail-badge" aria-hidden>
+                {inFlight > 99 ? "99+" : inFlight}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </aside>
   );
 }

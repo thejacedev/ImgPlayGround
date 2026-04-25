@@ -48,9 +48,27 @@ export const SIZES = [
 
 export type GalleryItem = {
   path: string;
+  rel_path: string;
   provider: string;
   prompt: string;
   created_at: string;
+};
+
+export type GalleryFolder = {
+  name: string;
+  rel_path: string;
+  image_count: number;
+};
+
+export type BreadcrumbSegment = {
+  name: string;
+  rel_path: string;
+};
+
+export type GalleryDir = {
+  folders: GalleryFolder[];
+  images: GalleryItem[];
+  breadcrumb: BreadcrumbSegment[];
 };
 
 export type GenResult = {
@@ -76,4 +94,23 @@ export type GhRepo = {
 export type GhStatus = {
   username: string;
   remote: string | null;
+};
+
+export type QueueStatus =
+  | "pending"
+  | "running"
+  | "succeeded"
+  | "failed"
+  | "cancelled";
+
+export type QueueJob = {
+  id: string;
+  source: "generate" | "bulk";
+  provider: Provider;
+  prompt: string;
+  status: QueueStatus;
+  startedAt: number;
+  endedAt: number | null;
+  paths: string[];
+  error: string | null;
 };

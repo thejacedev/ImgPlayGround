@@ -55,7 +55,7 @@ export default function KeyManager() {
   return (
     <div className="max-w-3xl mx-auto p-8 space-y-5 reveal">
       <PageHeader
-        num="04"
+        num="05"
         title="Keys"
         subtitle="Stored in your OS keyring. Never written to disk in plaintext."
       />

@@ -12,6 +12,7 @@ type Props = {
   ensureThumb: (path: string) => Promise<void>;
   onIndexChange: (i: number) => void;
   onClose: () => void;
+  onEdit?: (item: GalleryItem) => void;
 };
 
 const isKnownProvider = (s: string): s is Provider =>
@@ -24,6 +25,7 @@ export default function ImageViewer({
   ensureThumb,
   onIndexChange,
   onClose,
+  onEdit,
 }: Props) {
   const { pushToast } = useStore();
   const [saving, setSaving] = useState(false);
@@ -103,6 +105,16 @@ export default function ImageViewer({
           ✕
         </button>
         <div className="flex gap-2">
+          {onEdit && (
+            <button
+              type="button"
+              className="btn"
+              onClick={() => onEdit(current)}
+              title="Open in pixel-art editor"
+            >
+              ▦ Edit
+            </button>
+          )}
           <button
             type="button"
             className="btn"
@@ -166,31 +178,32 @@ export default function ImageViewer({
       )}
 
       <div className="viewer-bottom">
-        <div
-          className="viewer-prompt font-display italic"
-          title={current.prompt}
-        >
+        <div className="viewer-prompt" title={current.prompt}>
           {current.prompt || "Untitled"}
         </div>
         <div className="viewer-meta">
           <span
-            className="inline-block h-2 w-2 rounded-full mr-1.5 align-middle"
+            className="inline-block h-2 w-2 rounded-full mr-1.5 align-middle shrink-0"
             style={{ background: hue }}
           />
-          {PROVIDER_LABELS[current.provider as Provider] ?? current.provider}
+          <span className="shrink-0">
+            {isKnownProvider(current.provider)
+              ? PROVIDER_LABELS[current.provider]
+              : current.provider || "unknown"}
+          </span>
           {current.created_at && (
             <>
-              <span className="mx-2 opacity-60">·</span>
-              <span className="tabular-nums">
+              <span className="mx-2 opacity-60 shrink-0">·</span>
+              <span className="tabular-nums shrink-0">
                 {current.created_at.slice(0, 10)}
               </span>
             </>
           )}
-          <span className="mx-2 opacity-60">·</span>
-          <span className="font-mono opacity-70 truncate">
-            {current.path.split("/").slice(-1)[0]}
+          <span className="mx-2 opacity-60 shrink-0">·</span>
+          <span className="opacity-70 truncate min-w-0 max-w-[40ch]">
+            {current.path.split("/").pop() ?? current.path}
           </span>
-          <span className="ml-3 opacity-50 tabular-nums">
+          <span className="ml-3 opacity-50 tabular-nums shrink-0">
             {index + 1}/{items.length}
           </span>
         </div>
