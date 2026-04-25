@@ -1,0 +1,82 @@
+name: 🐛 Bug report
+description: Something is broken or not working as expected.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. The more concrete this is, the faster it gets fixed.
+        **Don't paste API keys.** Scrub them from any logs you include.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: App version (Settings → bottom bar shows it, or `tauri.conf.json`).
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - Linux (Fedora)
+        - Linux (Ubuntu / Debian)
+        - Linux (other)
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows
+    validations:
+      required: true
+
+  - type: dropdown
+    id: providers
+    attributes:
+      label: Providers involved
+      multiple: true
+      options:
+        - OpenAI
+        - Google Imagen
+        - Stability
+        - Replicate
+        - Fal.ai
+        - Black Forest Labs
+        - GitHub sync
+        - None / app shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      placeholder: One sentence. What did you do, what did you see?
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Bulk
+        2. Paste 3 prompts
+        3. Click Run
+        4. …
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / error output
+      description: Paste any error toasts, terminal output, or browser DevTools console (Ctrl+Shift+I in dev). Code blocks render nicely.
+      render: shell

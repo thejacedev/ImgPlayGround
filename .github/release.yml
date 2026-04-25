@@ -1,0 +1,34 @@
+# Controls how GitHub auto-generates release notes for this repo.
+# These categories show up as headings; PRs / commits get bucketed by label.
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - dependencies
+    authors:
+      - dependabot
+  categories:
+    - title: ✨ Features
+      labels:
+        - feature
+        - enhancement
+    - title: 🐛 Fixes
+      labels:
+        - fix
+        - bug
+    - title: 🎨 Design / UX
+      labels:
+        - design
+        - ui
+        - ux
+    - title: 🛠 Internals
+      labels:
+        - chore
+        - refactor
+        - build
+    - title: 📚 Docs
+      labels:
+        - docs
+    - title: Other changes
+      labels:
+        - "*"

@@ -1,0 +1,48 @@
+name: ✨ Feature request
+description: Suggest a new feature or improvement.
+title: "[feature] "
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Got an idea? Lay out the problem first — that helps shape the solution.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem?
+      description: What's frustrating, slow, or missing in your workflow today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would solve it?
+      description: Concrete is better than abstract. UI sketches, command names, prompt syntax — anything that makes it visualizable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Other tools, hacks, workarounds. Useful context for whether this belongs in the app at all.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Where would this live?
+      multiple: true
+      options:
+        - Generate panel
+        - Bulk panel
+        - Gallery
+        - Keys
+        - Settings
+        - GitHub sync
+        - Prompt syntax
+        - Storage / file naming
+        - New top-level area
+        - Not sure

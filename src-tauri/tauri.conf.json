@@ -1,0 +1,43 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "ImgPlayGround",
+  "version": "0.1.0",
+  "identifier": "dev.jace.imgplayground",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "ImgPlayGround",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 620
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["appimage", "rpm", "deb"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "GraphicsAndDesign",
+    "shortDescription": "Bulk image generation across major providers",
+    "longDescription": "ImgPlayGround generates images via OpenAI, Google, Stability, Replicate, Fal, and Black Forest Labs APIs. Bulk runs, local storage, optional git auto-commit."
+  },
+  "plugins": {}
+}
