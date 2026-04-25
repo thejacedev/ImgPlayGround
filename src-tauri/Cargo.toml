@@ -1,6 +1,6 @@
 [package]
 name = "imgplayground"
-version = "1.0.0"
+version = "1.0.1"
 description = "Bulk image generation across major providers"
 authors = ["JaceDev"]
 license = "MIT"
