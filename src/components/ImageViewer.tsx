@@ -29,10 +29,18 @@ export default function ImageViewer({
 }: Props) {
   const { pushToast } = useStore();
   const [saving, setSaving] = useState(false);
+  const [tiling, setTiling] = useState(false);
+  const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
 
   const current = items[index];
 
-  // Keyboard nav: ← → flip, Esc closes, S triggers save.
+  // Reset tile-test view + cached dimensions whenever the active image changes.
+  useEffect(() => {
+    setTiling(false);
+    setNaturalSize(null);
+  }, [current?.path]);
+
+  // Keyboard nav: ← → flip, Esc closes, S saves, T toggles tile-test.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -47,6 +55,9 @@ export default function ImageViewer({
       } else if (e.key.toLowerCase() === "s" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         save();
+      } else if (e.key.toLowerCase() === "t" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setTiling((v) => !v);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -117,6 +128,15 @@ export default function ImageViewer({
           )}
           <button
             type="button"
+            className={tiling ? "btn btn-active" : "btn"}
+            onClick={() => setTiling((v) => !v)}
+            title="Tile-test: repeat 3×3 to spot seams (T)"
+            aria-pressed={tiling}
+          >
+            ▦▦ {tiling ? "Single" : "Tile"}
+          </button>
+          <button
+            type="button"
             className="btn"
             onClick={save}
             disabled={saving}
@@ -144,11 +164,31 @@ export default function ImageViewer({
         }}
       >
         {b64 ? (
-          <img
-            src={`data:image/png;base64,${b64}`}
-            alt={current.prompt || "generated image"}
-            className="viewer-img"
-          />
+          tiling ? (
+            <div
+              className="viewer-tiled"
+              role="img"
+              aria-label={(current.prompt || "image") + " — tiled 3×3 for seam test"}
+              style={{
+                backgroundImage: `url("data:image/png;base64,${b64}")`,
+                aspectRatio: naturalSize
+                  ? `${naturalSize.w} / ${naturalSize.h}`
+                  : "1 / 1",
+              }}
+            />
+          ) : (
+            <img
+              src={`data:image/png;base64,${b64}`}
+              alt={current.prompt || "generated image"}
+              className="viewer-img"
+              onLoad={(e) => {
+                const t = e.currentTarget;
+                if (t.naturalWidth && t.naturalHeight) {
+                  setNaturalSize({ w: t.naturalWidth, h: t.naturalHeight });
+                }
+              }}
+            />
+          )
         ) : (
           <div className="text-muted text-sm">Loading…</div>
         )}
