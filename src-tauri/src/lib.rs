@@ -293,6 +293,7 @@ struct BulkRequest {
     n: u32,
     size: String,
     concurrency: u32,
+    extra: Option<serde_json::Value>,
 }
 
 #[derive(Serialize, Clone)]
@@ -326,6 +327,7 @@ async fn generate_bulk(
     let concurrency = req.concurrency.max(1) as usize;
     let size = req.size.clone();
     let n = req.n;
+    let extra = req.extra.clone();
 
     let prompts_len = req.prompts.len();
     let providers_len = req.providers.len();
@@ -345,6 +347,7 @@ async fn generate_bulk(
         let out_dir = out_dir.clone();
         let size = size.clone();
         let cancel = cancel_flag.clone();
+        let extra = extra.clone();
         async move {
             // Cancel was requested before this job got dispatched — short-circuit.
             if cancel.load(Ordering::Relaxed) {
@@ -374,9 +377,15 @@ async fn generate_bulk(
                 return;
             }
 
-            let res =
-                run_one(&provider, &prompt, n, &size, None, None, None, &out_dir, &app)
-                    .await;
+            // Extras (e.g. OpenAI background/output_format) are only meaningful
+            // for OpenAI today. Sending unknown keys to other providers would
+            // either be ignored (Google/Stability/Fal/BFL) or rejected
+            // (Replicate forwards every key to model input), so scope it.
+            let job_extra = if provider == "openai" { extra } else { None };
+            let res = run_one(
+                &provider, &prompt, n, &size, None, None, job_extra, &out_dir, &app,
+            )
+            .await;
             let success = res.is_ok();
             let r = match res {
                 Ok(paths) => {

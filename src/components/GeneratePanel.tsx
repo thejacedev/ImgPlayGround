@@ -30,6 +30,8 @@ export default function GeneratePanel() {
   const [n, setN] = useState(1);
   const [size, setSize] = useState<(typeof SIZES)[number]>("1024x1024");
   const [model, setModel] = useState("");
+  const [openaiBackground, setOpenaiBackground] =
+    useState<"auto" | "opaque" | "transparent">("auto");
   const [refreshingModels, setRefreshingModels] = useState(false);
   const ids = useId();
 
@@ -81,12 +83,17 @@ export default function GeneratePanel() {
     ]);
     setGen({ busy: true });
     try {
+      const extra =
+        provider === "openai" && openaiBackground !== "auto"
+          ? { background: openaiBackground }
+          : undefined;
       const res = await api.generateSingle({
         provider,
         prompt,
         n,
         size,
         model: model.trim() || undefined,
+        extra,
       });
       if (res.error) {
         updateQueueJob(jobId, {
@@ -330,6 +337,32 @@ export default function GeneratePanel() {
             ))}
           </datalist>
         </div>
+
+        {provider === "openai" && (
+          <div className="col-span-4">
+            <label
+              className="label block mb-1.5"
+              htmlFor={`${ids}-bg`}
+              title="OpenAI bakes a background into the PNG unless you ask for transparency."
+            >
+              Background
+            </label>
+            <select
+              id={`${ids}-bg`}
+              className="input"
+              value={openaiBackground}
+              onChange={(e) =>
+                setOpenaiBackground(
+                  e.target.value as "auto" | "opaque" | "transparent"
+                )
+              }
+            >
+              <option value="auto">Auto</option>
+              <option value="opaque">Opaque</option>
+              <option value="transparent">Transparent (PNG)</option>
+            </select>
+          </div>
+        )}
 
         <div className="col-span-12 flex justify-end">
           <button

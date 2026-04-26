@@ -29,6 +29,8 @@ export default function BulkPanel() {
   const [n, setN] = useState(1);
   const [size, setSize] = useState<(typeof SIZES)[number]>("1024x1024");
   const [concurrency, setConcurrency] = useState(3);
+  const [openaiBackground, setOpenaiBackground] =
+    useState<"auto" | "opaque" | "transparent">("auto");
   const ids = useId();
 
   function toggle(p: Provider) {
@@ -98,12 +100,17 @@ export default function BulkPanel() {
       progress: { total: allJobs.length, completed: 0, failed: 0 },
     });
     try {
+      const extra =
+        activeProviders.includes("openai") && openaiBackground !== "auto"
+          ? { background: openaiBackground }
+          : undefined;
       const res = await api.generateBulk({
         prompts: promptsList,
         providers: activeProviders,
         n,
         size,
         concurrency,
+        extra,
       });
       setBulk({ busy: false, results: res });
       const ok = res.filter((r) => !r.error).length;
@@ -239,6 +246,34 @@ export default function BulkPanel() {
             />
           </div>
         </div>
+
+        {selected.has("openai") && (
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label
+                className="label block mb-1.5"
+                htmlFor={`${ids}-bg`}
+                title="OpenAI bakes a background into the PNG unless you ask for transparency. Applies to OpenAI jobs only."
+              >
+                OpenAI background
+              </label>
+              <select
+                id={`${ids}-bg`}
+                className="input"
+                value={openaiBackground}
+                onChange={(e) =>
+                  setOpenaiBackground(
+                    e.target.value as "auto" | "opaque" | "transparent"
+                  )
+                }
+              >
+                <option value="auto">Auto</option>
+                <option value="opaque">Opaque</option>
+                <option value="transparent">Transparent (PNG)</option>
+              </select>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center justify-between pt-1">
           <div className="text-xs font-mono text-muted tabular-nums">

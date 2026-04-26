@@ -28,6 +28,7 @@ type BulkRequest = {
   n: number;
   size: string;
   concurrency: number;
+  extra?: unknown;
 };
 
 export const api = {

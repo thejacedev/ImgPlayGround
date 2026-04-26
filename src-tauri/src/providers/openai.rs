@@ -1,14 +1,6 @@
 use super::{http_client, GenOutput, GenParams, ModelInfo};
 use base64::Engine;
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize)]
-struct Req<'a> {
-    model: &'a str,
-    prompt: &'a str,
-    n: u32,
-    size: &'a str,
-}
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 struct Resp {
@@ -24,15 +16,50 @@ struct Image {
 pub async fn generate(api_key: &str, p: &GenParams) -> anyhow::Result<Vec<GenOutput>> {
     let model = p.model.as_deref().unwrap_or("gpt-image-2");
     let client = http_client();
+
+    let mut body = serde_json::json!({
+        "model": model,
+        "prompt": p.prompt,
+        "n": p.n,
+        "size": p.size,
+    });
+
+    let supports_extras = model.starts_with("gpt-image");
+    let mut output_format: Option<String> = None;
+    if supports_extras {
+        let mut background: Option<String> = None;
+        if let Some(extra) = &p.extra {
+            if let Some(obj) = extra.as_object() {
+                if let Some(v) = obj.get("background").and_then(|v| v.as_str()) {
+                    background = Some(v.to_string());
+                }
+                if let Some(v) = obj.get("output_format").and_then(|v| v.as_str()) {
+                    output_format = Some(v.to_string());
+                }
+            }
+        }
+        if let Some(bg) = background.as_deref() {
+            body["background"] = serde_json::json!(bg);
+            if bg == "transparent"
+                && output_format.as_deref().map(|s| s == "jpeg").unwrap_or(true)
+            {
+                output_format = Some("png".into());
+            }
+        }
+        if let Some(fmt) = &output_format {
+            body["output_format"] = serde_json::json!(fmt);
+        }
+    }
+    let mime = match output_format.as_deref() {
+        Some("jpeg") => "image/jpeg",
+        Some("webp") => "image/webp",
+        _ => "image/png",
+    };
+
     let resp = client
         .post("https://api.openai.com/v1/images/generations")
         .bearer_auth(api_key)
-        .json(&Req {
-            model,
-            prompt: &p.prompt,
-            n: p.n,
-            size: &p.size,
-        })
+        .json(&body)
         .send()
         .await?;
 
@@ -61,7 +88,7 @@ pub async fn generate(api_key: &str, p: &GenParams) -> anyhow::Result<Vec<GenOut
         };
         out.push(GenOutput {
             bytes,
-            mime: "image/png".into(),
+            mime: mime.into(),
             seed: None,
             model: model.into(),
         });
